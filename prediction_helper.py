@@ -1,12 +1,14 @@
 # prediction_helper.py
 import pandas as pd
+import os
 from joblib import load
 
-# Load artifacts
-model_rest = load('artifacts\model_rest.joblib')
-model_young = load('artifacts\model_young.joblib')
-scaler_rest = load('artifacts\scaler_rest.joblib')
-scaler_young = load('artifacts\scaler_young.joblib')
+# --- Safe artifact loading ---
+ARTIFACTS_DIR = 'artifacts'
+model_rest = load(os.path.join(ARTIFACTS_DIR, 'model_rest.joblib'))
+model_young = load(os.path.join(ARTIFACTS_DIR, 'model_young.joblib'))
+scaler_rest = load(os.path.join(ARTIFACTS_DIR, 'scaler_rest.joblib'))
+scaler_young = load(os.path.join(ARTIFACTS_DIR, 'scaler_young.joblib'))
 
 # Features the model expects (NO income_level)
 MODEL_FEATURES = [
@@ -56,18 +58,15 @@ def get_normalized_risk_score(medical_history):
 
 
 def preprocessed_input(input_dict):
-    # DataFrame with ALL columns needed (model + income_level for scaling)
     df = pd.DataFrame([{col: 0 for col in SCALER_FEATURES}])
 
-    # --- Numeric mappings ---
     df['age'] = input_dict['Age']
     df['number_of_dependants'] = input_dict['Number of Dependants']
     df['income_lakhs'] = input_dict['Income in Lakhs']
     df['genetical_risk'] = input_dict['Genetical Risk']
     df['insurance_plan'] = insurance_plan_encoding[input_dict['Insurance Plan']]
-    df['income_level'] = income_level_encoding[input_dict['Income Level']]  # only for scaling
+    df['income_level'] = income_level_encoding[input_dict['Income Level']]
 
-    # --- One‑hot encodings ---
     if input_dict['Gender'] == 'Male':
         df['gender_Male'] = 1
 
@@ -78,7 +77,6 @@ def preprocessed_input(input_dict):
         df['region_Southeast'] = 1
     elif region == 'Southwest':
         df['region_Southwest'] = 1
-    # Northeast is dropped
 
     if input_dict['Marital Status'] == 'Unmarried':
         df['marital_status_Unmarried'] = 1
@@ -90,7 +88,6 @@ def preprocessed_input(input_dict):
         df['bmi_category_Overweight'] = 1
     elif bmi == 'Underweight':
         df['bmi_category_Underweight'] = 1
-    # Normal is dropped
 
     smoke = input_dict['Smoking Status']
     mapped = smoking_status_map.get(smoke)
@@ -98,23 +95,18 @@ def preprocessed_input(input_dict):
         df['smoking_status_Regular Smoker'] = 1
     elif mapped == 'Occasional Smoker':
         df['smoking_status_Occasional Smoker'] = 1
-    # Non‑smokers stay 0
 
     emp = input_dict['Employment Status']
     if emp == 'Salaried':
         df['employment_status_Salaried'] = 1
     elif emp == 'Self-Employed':
         df['employment_status_Self-Employed'] = 1
-    # Freelancer is dropped
 
     df['normalized_risk_score'] = get_normalized_risk_score(input_dict['Medical History'])
 
-    # Apply scaling (needs income_level)
     df = handle_scaling(input_dict['Age'], df)
 
-    # Drop income_level after scaling – model doesn't use it
     df.drop(columns=['income_level'], inplace=True)
-    # Ensure exact column order
     return df[MODEL_FEATURES]
 
 
