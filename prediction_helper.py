@@ -5,10 +5,10 @@ from joblib import load
 
 # --- Safe artifact loading ---
 ARTIFACTS_DIR = 'artifacts'
-model_rest = load(os.path.join(ARTIFACTS_DIR, 'model_rest.joblib'))
-model_young = load(os.path.join(ARTIFACTS_DIR, 'model_young.joblib'))
-scaler_rest = load(os.path.join(ARTIFACTS_DIR, 'scaler_rest.joblib'))
-scaler_young = load(os.path.join(ARTIFACTS_DIR, 'scaler_young.joblib'))
+model_rest = load('model_rest.joblib')
+model_young = load('model_young.joblib')
+scaler_rest = load('scaler_rest.joblib')
+scaler_young = load('scaler_young.joblib')
 
 # Features the model expects (NO income_level)
 MODEL_FEATURES = [
